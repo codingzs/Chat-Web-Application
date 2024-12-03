@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Chat Application</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .chat-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            height: calc(100vh - 40px);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .chat-body {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        .user-list-container {
+            width: 300px;
+            background-color: #ffffff;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+        }
+        .chat-messages {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #e5ddd5;
+        }
+        .messages-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            max-width: 70%;
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 18px;
+            position: relative;
+            animation: messageAppear 0.3s ease-out;
+        }
+        @keyframes messageAppear {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .sender {
+            background-color: #dcf8c6;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+        .receiver {
+            background-color: #ffffff;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+        .message-input {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-top: 1px solid #ddd;
+        }
+        .file-input {
+            display: none;
+        }
+        .file-label {
+            cursor: pointer;
+        }
+        .message-sender {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        .message-content {
+            margin-bottom: 0;
+        }
+        .file-message {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .file-icon {
+            font-size: 24px;
+        }
+        .download-button {
+            background-color: #25D366;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .download-button:hover {
+            background-color: #128C7E;
+            transform: scale(1.1);
+        }
+        .user-item {
+            cursor: pointer;
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            transition: all 0.3s ease;
+        }
+        .user-item:hover {
+            background-color: #f0f0f0;
+        }
+        .user-item.active {
+            background-color: #e6e6e6;
+        }
+        .message-preview {
+            font-size: 0.8em;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .timestamp {
+            font-size: 0.7em;
+            color: #888;
+            text-align: right;
+            margin-top: 5px;
+        }
+        .hidden {
+            display: none;
+        }
+        #message {
+            border-radius: 20px;
+            padding-right: 50px;
+        }
+        .btn-send {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #667eea;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .btn-send:hover {
+            background-color: #764ba2;
+        }
+        .back-button {
+            display: none;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+        .back-button.active {
+            display: block;
+        }
+        @media (max-width: 768px) {
+    .chat-container {
+        height: 100vh;
+        margin: 0;
+        border-radius: 0;
+    }
+
+    .chat-body {
+        flex-direction: column;
+    }
+
+    .user-list-container {
+        width: 100%;
+        height: calc(100vh - 70px); /* Adjust based on your header height */
+    }
+
+    .chat-messages {
+        display: none;
+    }
+
+    .chat-messages.active {
+        display: flex;
+        flex-direction: column; /* Ensure messages stack vertically */
+        height: calc(100vh - 70px - 65px); /* Adjust for header and message input */
+        overflow-y: auto; /* Allow scrolling if messages exceed the viewable area */
+        padding-bottom: 65px; /* Space for the input field */
+    }
+
+    .message-input {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 10px;
+        padding-left: 32px;
+        background-color: #f0f0f0;
+        z-index: 1000;
+        box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1); /* Optional: Add shadow for depth */
+    }
+
+    .back-button {
+        display: none;
+        margin-right: 10px;
+    }
+
+    .back-button.active {
+        display: inline-block;
+    }
+}
+
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h2>Chat Window</h2>
+            <div class="d-flex align-items-center">
+                <p class="mb-0 me-3">Welcome, {{ username }}!</p>
+                <a href="{{ url_for('logout') }}" class="text-white">Logout</a>
+                <button class="back-button" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+            </div>
+        </div>
+        <div class="chat-body">
+            <div class="user-list-container">
+                <div id="userList">
+                    <!-- Active users will be listed here -->
+                </div>
+            </div>
+            <div class="chat-messages">
+                <div id="chatBox" class="messages-container hidden">
+                    <!-- Chat messages will appear here -->
+                </div>
+                <div id="messageInput" class="message-input hidden">
+                    <form id="chatForm" class="d-flex position-relative" onsubmit="return sendMessage();">
+                        <input type="text" id="message" class="form-control" placeholder="Type a message..." required>
+                        <label for="file-input" class="btn btn-outline-secondary file-label position-absolute" style="right: 60px; top: 50%; transform: translateY(-50%);" aria-label="Attach file">
+                            <i class="fas fa-paperclip"></i>
+                        </label>
+                        <input type="file" id="file-input" class="file-input" aria-hidden="true">
+                        <button class="btn-send" type="submit">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let activeUsers = [];
+        let currentRecipient = null;
+        let messages = {};
+
+        function loadMessagesFromStorage() {
+            const storedMessages = localStorage.getItem('chatMessages');
+            if (storedMessages) {
+                messages = JSON.parse(storedMessages);
+            }
+        }
+
+        function saveMessagesToStorage() {
+            localStorage.setItem('chatMessages', JSON.stringify(messages));
+        }
+
+        loadMessagesFromStorage();
+
+        socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+
+        socket.on('user_connected', (data) => {
+            console.log('User connected:', data.username);
+            addUser(data.username);
+        });
+
+        socket.on('user_disconnected', (data) => {
+            console.log('User disconnected:', data.username);
+            removeUser(data.username);
+        });
+
+        socket.on('new_message', (data) => {
+            addMessage(data.sender, data.message, data.timestamp);
+        });
+
+        socket.on('new_file', (data) => {
+            addFileMessage(data.sender, data.filename, data.timestamp);
+        });
+
+        function sendMessage() {
+            const messageInput = document.getElementById('message');
+            const message = messageInput.value.trim();
+
+            if (message && currentRecipient) {
+                socket.emit('send_message', { message: message, recipient: currentRecipient });
+                messageInput.value = '';
+            }
+            return false;
+        }
+
+        function addMessage(sender, message, timestamp) {
+            const isCurrentUser = sender === '{{ username }}';
+            const chatPartner = isCurrentUser ? currentRecipient : sender;
+            
+            if (!messages[chatPartner]) {
+                messages[chatPartner] = [];
+            }
+            
+            messages[chatPartner].push({
+                sender,
+                message,
+                timestamp
+            });
+            
+            saveMessagesToStorage();
+            
+            if (currentRecipient === chatPartner) {
+                displayMessage(sender, message, timestamp);
+            }
+            
+            updateUserList();
+        }
+
+        function displayMessage(sender, message, timestamp) {
+            const chatBox = document.getElementById('chatBox');
+            const messageElement = document.createElement('div');
+            const isCurrentUser = sender === '{{ username }}';
+            messageElement.className = `message ${isCurrentUser ? 'sender' : 'receiver'}`;
+            
+            let messageContent = `<div class="message-sender">${sender}</div>`;
+            messageContent += `<p class="message-content">${message}</p>`;
+            messageContent += `<div class="timestamp">${timestamp}</div>`;
+            
+            messageElement.innerHTML = messageContent;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function addFileMessage(sender, filename, timestamp) {
+            const isCurrentUser = sender === '{{ username }}';
+            const chatPartner = isCurrentUser ? currentRecipient : sender;
+            
+            if (!messages[chatPartner]) {
+                messages[chatPartner] = [];
+            }
+            
+            messages[chatPartner].push({
+                sender,
+                filename,
+                timestamp,
+                isFile: true
+            });
+            
+            saveMessagesToStorage();
+            
+            if (currentRecipient === chatPartner) {
+                displayFileMessage(sender, filename, timestamp);
+            }
+            
+            updateUserList();
+        }
+
+        function displayFileMessage(sender, filename, timestamp) {
+            const chatBox = document.getElementById('chatBox');
+            const messageElement = document.createElement('div');
+            const isCurrentUser = sender === '{{ username }}';
+            messageElement.className = `message ${isCurrentUser ? 'sender' : 'receiver'}`;
+            
+            let messageContent = `<div class="message-sender">${sender}</div>`;
+            messageContent += `
+                <div class="file-message">
+                    <span class="file-icon">📎</span>
+                    <span>${filename}</span>
+                    <button class="download-button" onclick="downloadFile('${filename}')">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            `;
+            messageContent += `<div class="timestamp">${timestamp}</div>`;
+            
+            messageElement.innerHTML = messageContent;
+            chatBox.appendChild(messageElement);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function downloadFile(filename) {
+            window.open(`/download/${filename}`, '_blank');
+        }
+
+        function sendFile() {
+            const fileInput = document.getElementById('file-input');
+            const file = fileInput.files[0];
+            if (file && currentRecipient) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const fileData = {
+                        name: file.name,
+                        content: new Uint8Array(e.target.result)
+                    };
+                    socket.emit('upload_file', { file: fileData, recipient: currentRecipient });
+                };
+                reader.readAsArrayBuffer(file);
+                fileInput.value = '';
+            }
+        }
+
+        function addUser(username) {
+            if (!activeUsers.includes(username) && username !== '{{ username }}') {
+                activeUsers.push(username);
+                updateUserList();
+            }
+        }
+
+        function removeUser(username) {
+            const index = activeUsers.indexOf(username);
+            if (index > -1) {
+                activeUsers.splice(index, 1);
+                updateUserList();
+            }
+        }
+
+        function updateUserList() {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+            activeUsers.forEach(username => {
+                const userMessages = messages[username] || [];
+                const lastMessage = userMessages[userMessages.length - 1];
+                const li = document.createElement('div');
+                li.className = `user-item ${username === currentRecipient ? 'active' : ''}`;
+                li.onclick = () => selectUser(username);
+                
+                let preview = '';
+                if (lastMessage) {
+                    preview = lastMessage.isFile ? `File: ${lastMessage.filename}` : lastMessage.message;
+                }
+                
+                li.innerHTML = `
+                    <div>${username}</div>
+                    <div class="message-preview">${preview}</div>
+                `;
+                userList.appendChild(li);
+            });
+        }
+
+        function selectUser(username) {
+            currentRecipient = username;
+            document.getElementById('message').placeholder = `Message ${username}...`;
+            updateUserList();
+            displayUserMessages(username);
+            showChatBox();
+            
+            if (window.innerWidth <= 768) {
+                document.querySelector('.user-list-container').style.display = 'none';
+                document.querySelector('.chat-messages').classList.add('active');
+                document.querySelector('.back-button').classList.add('active');
+                document.getElementById('messageInput').style.display = 'flex';
+            }
+        }
+
+        function showChatBox() {
+            document.getElementById('chatBox').classList.remove('hidden');
+            document.getElementById('messageInput').classList.remove('hidden');
+            document.querySelector('.chat-messages').classList.remove('hidden');
+        }
+
+        function displayUserMessages(username) {
+            const chatBox = document.getElementById('chatBox');
+            chatBox.innerHTML = '';
+            const userMessages = messages[username] || [];
+            userMessages.forEach(msg => {
+                if (msg.isFile) {
+                    displayFileMessage(msg.sender, msg.filename, msg.timestamp);
+                } else {
+                    displayMessage(msg.sender, msg.message, msg.timestamp);
+                }
+            });
+        }
+
+        socket.on('update_user_list', (data) => {
+            activeUsers = data.users.filter(user => user !== '{{ username }}');
+            updateUserList();
+        });
+
+        document.getElementById('file-input').addEventListener('change', sendFile);
+
+        function goBack() {
+            if (window.innerWidth <= 768) {
+                document.querySelector('.user-list-container').style.display = 'block';
+                document.querySelector('.chat-messages').classList.remove('active');
+                document.querySelector('.back-button').classList.remove('active');
+                document.getElementById('messageInput').style.display = 'none';
+            }
+        }
+
+        window.addEventListener('resize', function() {
+            if (window.innerWidth > 768) {
+                document.querySelector('.user-list-container').style.display = 'block';
+                document.querySelector('.chat-messages').classList.remove('active');
+                document.querySelector('.back-button').classList.remove('active');
+            } else if (currentRecipient) {
+                document.querySelector('.user-list-container').style.display = 'none';
+                document.querySelector('.chat-messages').classList.add('active');
+                document.querySelector('.back-button').classList.add('active');
+            }
+        });
+    </script>
+</body>
+</html>
