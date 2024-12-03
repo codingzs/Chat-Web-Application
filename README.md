@@ -1,1 +1,1 @@
-# Chat-Web-Application
+Developed a chat web application using HTML, CSS, and Bootstrap for the frontend, Flask with Python for the backend, and MongoDB Atlas for the database. The application includes features like user registration with OTP verification, login, password recovery via OTP, and real-time chat with file sharing (small-size files). Users can view a list of other logged-in users and select recipients to send messages, ensuring smooth and interactive communication.
